@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cstring>
+#include <goose/OutputStream.h>
+
 #include <functional>
-#include <iostream>
 #include <list>
 
 namespace goose {
@@ -10,21 +10,21 @@ namespace goose {
 class TestSuite
 {
     static bool failure;
-    static std::ostream* output;
+    static OutputStream output;
     static std::list<std::function<void()>> testSuites;
 
     void preamble(const char* suiteName, const char* caseName)
     {
-        *output << suiteName << "." << caseName << "\n";
+        output << suiteName << "." << caseName << goose::endl;
         start();
     }
 
     void postamble(const char* suiteName, const char* caseName)
     {
         end();
-        *output << suiteName << "."
-                << caseName << " "
-                << (failure ? "FAILED\n" : "passed") << "\n";
+        output << suiteName << "."
+               << caseName << " "
+               << (failure ? "FAILED\n" : "passed") << goose::endl;
     }
 
 protected:
@@ -58,9 +58,9 @@ public:
         auto pass = expected == observed;
 
         if (!pass) {
-            *output << "Test Failure at "
-                    << filename << ":"
-                    << lineNumber << std::endl;
+            output << "Test Failure at "
+                   << filename << ":"
+                   << lineNumber << goose::endl;
         }
 
         failure = !pass;
@@ -73,36 +73,37 @@ public:
                                    const FileNameT& filename,
                                    const LineNumberT& lineNumber)
     {
-        auto expectedInvalid = expected == nullptr;
-        auto observedInvalid = observed == nullptr;
-        if (expectedInvalid || observedInvalid) {
-            *output << (expectedInvalid ? "expected value " : "")
-                    << (expectedInvalid && observedInvalid ? "and " : "")
-                    << (observedInvalid ? "observed value " : "")
-                    << "invalid" << std::endl;
-        }
-
         auto pass = strcmp(observed, expected) == 0;
 
         if (!pass) {
-            *output << "Test Failure at "
-                    << filename << ":"
-                    << lineNumber << std::endl;
+            output << "Test Failure at "
+                   << filename << ":"
+                   << lineNumber << goose::endl;
+
+            auto expectedInvalid = expected == nullptr;
+            auto observedInvalid = observed == nullptr;
+            output << "  expected value: " << (expectedInvalid ? "<null>" : expected)
+                   << "\n  observed value: " << (observedInvalid ? "<null>" : observed)
+                   << goose::endl;
         }
 
         failure = !pass;
     }
 
+    static void set_failure_state(bool fs)
+    {
+        failure = fs;
+    }
+
     static int execute()
     {
-        output = &std::cout;
         for (const auto& testSuite : testSuites) testSuite();
         return 0;
     }
 };
 
 bool TestSuite::failure;
-std::ostream* TestSuite::output;
+OutputStream TestSuite::output;
 std::list<std::function<void()>> TestSuite::testSuites;
 
 }  // namespace goose
