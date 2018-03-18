@@ -66,6 +66,14 @@ public:
         failure = !pass;
     }
 
+    static bool strings_match(const char* s1,
+                              const char* s2)
+    {
+        auto i = 0;
+        while (s1[i] != 0 && s2[i] != 0 && s1[i] == s2[i]) ++i;
+        return s1[i] == 0 && s2[i] == 0;
+    }
+
     template <typename FileNameT,
               typename LineNumberT>
     static void expectCStringEqual(const char* expected,
@@ -73,7 +81,7 @@ public:
                                    const FileNameT& filename,
                                    const LineNumberT& lineNumber)
     {
-        auto pass = strcmp(observed, expected) == 0;
+        auto pass = strings_match(observed, expected);
 
         if (!pass) {
             output << "Test Failure at "
